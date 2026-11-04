@@ -2,6 +2,7 @@
 Cairnward, and the mapping of its answers. Runs without paper-qa installed."""
 
 import importlib.util
+import os
 import pickle
 from pathlib import Path
 from types import ModuleType
@@ -126,7 +127,8 @@ def test_cache_key_is_kept_owner_only(tmp_path: Path) -> None:
     paths = Paths(tmp_path / "d", tmp_path / "s")
     first = paperqa.cache_key(paths)
     assert len(first) == 32 and paperqa.cache_key(paths) == first
-    assert (paths.state_dir / "paperqa-cache.key").stat().st_mode & 0o077 == 0
+    if os.name != "nt":  # no POSIX file modes on Windows
+        assert (paths.state_dir / "paperqa-cache.key").stat().st_mode & 0o077 == 0
 
 
 @pytest.mark.parametrize(
