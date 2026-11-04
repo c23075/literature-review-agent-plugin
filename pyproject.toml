@@ -1,0 +1,69 @@
+[project]
+name = "cairnward-research"
+version = "0.1.0"
+description = "Literature libraries and review workflows, as a plugin for Cairnward"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+readme = "README.md"
+dependencies = [
+    "alembic>=1.13",
+    "anyio>=4",
+    "httpx>=0.27",
+    "mcp==2.3.0",
+    "pydantic>=2.8",
+    "pypdfium2>=4.30",
+    "pyrage>=1.2",
+    "pyyaml>=6",
+    "sqlalchemy>=2.0",
+    "sqlite-vec>=0.1.6",
+]
+
+[project.scripts]
+cairnward-research = "cairnward_research.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "hypothesis>=6",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "types-pyyaml>=6.0.12.20261103",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cairnward_research"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF", "PTH"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "S310", "S603", "S607"]
+"src/cairnward_research/engines/*.py" = ["S603", "S301"]
+"src/cairnward_research/csl/*.py" = ["S603"]
+"src/cairnward_research/drive.py" = ["S603"]
+"src/cairnward_research/nodejs.py" = ["S603"]
+"src/cairnward_research/library.py" = ["S608"]  # the vector table name is built from a checked id
+"src/cairnward_research/check.py" = ["RUF001"]
+"src/cairnward_research/cite.py" = ["RUF001"]
+"evals/**" = ["S101", "S603", "S607"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+strict = true
+files = ["src"]
+exclude = ["engines/.*_worker\\.py$"]
+ignore_missing_imports = true
