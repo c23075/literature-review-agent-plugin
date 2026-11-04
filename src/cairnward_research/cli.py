@@ -33,7 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
                                      description=__doc__.split("\n")[0])  # fmt: skip
     parser.add_argument("--version", action="version", version=__version__)
     parser.add_argument("--standalone", action="store_true",
-                        help="no Cairnward: none of the plugin contract's protections apply")  # fmt: skip
+                        help="no Cairnward: none of the contract's protections apply")  # fmt: skip
     sub = parser.add_subparsers(dest="command", metavar="COMMAND", required=True)
     sub.add_parser("serve", help="the MCP server (Cairnward starts this)")
     inst = sub.add_parser("install-plugin", help="write the manifest and add this to Cairnward")

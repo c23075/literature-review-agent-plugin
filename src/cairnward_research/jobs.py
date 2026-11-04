@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from cairnward_research.chunking import estimate_tokens
+from cairnward_research.llm import PAPER_TEXT_RULE
 
 Status = Literal["queued", "running", "done", "failed", "cancelled"]
 StepStatus = Literal["pending", "done", "failed"]
@@ -228,7 +229,7 @@ NOTES_SYSTEM = (
     "You read one research paper and write notes for a literature review. Use only the "
     "paper's text. Reply with a JSON object with these keys: aim, method, sample, findings, "
     "limitations. Each value is one or two sentences ending with the page, like (p. 4). "
-    'Write "not reported" when the paper doesn\'t say.'
+    'Write "not reported" when the paper doesn\'t say. ' + PAPER_TEXT_RULE
 )
 
 
@@ -239,14 +240,15 @@ SCREEN_SYSTEM = (
     'sentence>"}. Exclude a paper only when it is clearly about a different subject, or its '
     "title or abstract explicitly rules out a criterion (for example, a study of children "
     "when the criteria require adults). A related topic, a different measure, or a criterion "
-    'the abstract doesn\'t mention is not a reason to exclude: say "unsure".'
+    'the abstract doesn\'t mention is not a reason to exclude: say "unsure". ' + PAPER_TEXT_RULE
 )
 SYNTHESIS_SYSTEM = (
     "You write the synthesis section of a literature review from notes on the included "
     "papers. Use only the notes. Organise by theme: where the papers agree, where they "
     "disagree or differ in method, and what remains unknown. Cite papers by their number in "
     "square brackets, like [2] or [1, 3], after every claim; cite only numbers that appear "
-    "in the notes. Write plain paragraphs, 200 to 600 words, no headings and no reference list."
+    "in the notes. Write plain paragraphs, 200 to 600 words, no headings and no reference list. "
+    + PAPER_TEXT_RULE
 )
 
 

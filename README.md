@@ -117,7 +117,7 @@ Set `chat_model`, `fast_model` and `embed_model` in `research.toml`.
 - **PaperQA2 can misdescribe a source.** Its fast model can write a wrong summary, and the main model repeats it as what the paper says. A prompt fix stopped one form of this, but others still pass the checks ([results](docs/bench/results-2026-11-04-paperqa-reruns.md)). Prefer the default engine until you've tried it on your own papers.
 - **Checks catch quotations, not paraphrase.** A false claim without quotation marks isn't detected.
 - **Locking** doesn't cover your source PDFs, and a library is plain text while unlocked.
-- **Prompt injection from papers** can still mislead a model. See `evals/injection`.
+- **Prompt injection from papers** can still mislead a model. On the real model, one planted instruction got its code into an answer in 2 of 4 lean runs, once with the rule against it in place ([results](docs/bench/results-2026-11-05-plugin.md)). See `evals/injection`.
 
 ## Development
 ```bash

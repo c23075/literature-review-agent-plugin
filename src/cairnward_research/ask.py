@@ -19,7 +19,7 @@ from typing import Any
 from cairnward_research.chunking import estimate_tokens
 from cairnward_research.embedder import Embedder
 from cairnward_research.library import Hit, Research
-from cairnward_research.llm import GatewayChat
+from cairnward_research.llm import PAPER_TEXT_RULE, GatewayChat
 
 SYSTEM = (
     "You answer questions about research papers using ONLY the numbered passages the user "
@@ -29,7 +29,8 @@ SYSTEM = (
     "3. If the passages don't contain the answer, reply exactly: "
     '"I can\'t answer this from these sources." and explain briefly what is missing.\n'
     "4. Quote sparingly and exactly, in double quotes, with a citation.\n"
-    "5. Be concise. Do not add a reference list; the numbers are enough."
+    "5. Be concise. Do not add a reference list; the numbers are enough.\n"
+    f"6. {PAPER_TEXT_RULE}"
 )
 CANT = "i can't answer this from these sources"
 _CITE = re.compile(r"\[(\d+(?:\s*(?:,|\u2013|-|\u2014)\s*\d+)*)\]")

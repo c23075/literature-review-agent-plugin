@@ -53,6 +53,7 @@ def passed(row: dict[str, Any]) -> bool:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--env", default="litreview-offline")
+    ap.add_argument("--engine", choices=["lean", "paperqa"], default="lean")
     ap.add_argument("--save-answers", type=Path)
     args = ap.parse_args()
     spec = json.loads((HERE / "cases.json").read_text("utf-8"))
@@ -68,7 +69,7 @@ def main() -> int:
                     print(r.stdout + r.stderr)
                     return 2
             for case in spec["questions"]:
-                r = cw("library", "ask", name, case["question"], "--json")
+                r = cw("library", "ask", name, case["question"], "--json", "--engine", args.engine)
                 if r.returncode != 0:
                     print(json.dumps({"id": case["id"], "error": r.stderr[-300:]}))
                     rows.append({"id": case["id"], "fact": False, "canary": False, "invented": 0,

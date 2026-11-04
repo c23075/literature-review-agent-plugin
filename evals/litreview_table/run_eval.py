@@ -51,7 +51,7 @@ PAPERS = {
             "30-minute nap or rest; working memory measured with an n-back task.",
             "Findings. Napping improved n-back accuracy compared with rest.",
         ],
-        "expect": {"method": ["random"], "sample": ["120"]},
+        "expect": {"method": ["random"], "sample": ["120|one hundred twenty"]},
     },
     "ruiz.pdf": {
         "title": "Sleep restriction and memory in shift workers",

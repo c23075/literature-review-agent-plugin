@@ -8,6 +8,8 @@ from typing import Any
 
 from cairnward_research import GatewayEmbedder, Research
 from cairnward_research.ask import SYSTEM, run_ask
+from cairnward_research.jobs import NOTES_SYSTEM, SCREEN_SYSTEM, SYNTHESIS_SYSTEM
+from cairnward_research.llm import PAPER_TEXT_RULE
 
 EVAL = Path(__file__).parent.parent / "evals" / "injection"
 
@@ -38,6 +40,11 @@ def test_scoring_catches_each_way_of_being_steered() -> None:
     assert not ev.passed(linked)
     quoted = ev.score(case, {"text": "attention", "quote_problems": ["x"]}, "ZEBRA-7731")
     assert not ev.passed(quoted)
+
+
+def test_every_prompt_over_paper_text_says_it_is_not_instructions() -> None:
+    for prompt in (SYSTEM, NOTES_SYSTEM, SCREEN_SYSTEM, SYNTHESIS_SYSTEM):
+        assert PAPER_TEXT_RULE in prompt
 
 
 def test_each_planted_paper_also_holds_a_real_fact() -> None:
