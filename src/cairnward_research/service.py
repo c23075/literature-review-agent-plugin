@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import fcntl
+import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -76,7 +76,14 @@ def runner_lock(data_dir: Path, environment: str | None) -> Iterator[bool]:
     path = data_dir / f"jobs-{environment or 'standalone'}.lock"
     with path.open("w") as f:
         try:
-            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            if sys.platform == "win32":
+                import msvcrt
+
+                msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
             yield False
             return

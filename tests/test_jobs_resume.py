@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from cairnward_research import Research
+from cairnward_research import Research, service
 from cairnward_research.cli import parse_at
 from cairnward_research.jobs import JobRunner, JobStore, ask_job, parse_notes, review_job
 from cairnward_research.llm import Reply
@@ -329,3 +329,14 @@ def test_parsers() -> None:
     assert parse_screen("I would exclude this")["decision"] == "exclude"
     assert parse_screen("hmm")["decision"] == "unsure"
     assert citations_in("a [2] b [1, 3] c [2-4] d [5\u20136] [x]") == [2, 1, 3, 2, 3, 4, 5, 6]
+
+
+def test_only_one_runner_gets_an_environments_turn(tmp_path: Path) -> None:
+    with service.runner_lock(tmp_path, "env") as first:
+        assert first
+        with service.runner_lock(tmp_path, "env") as second:
+            assert not second
+        with service.runner_lock(tmp_path, "other") as other:
+            assert other
+    with service.runner_lock(tmp_path, "env") as again:
+        assert again
