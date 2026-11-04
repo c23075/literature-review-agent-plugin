@@ -40,8 +40,10 @@ _LIBRARY_NAME = re.compile(r"^[a-z0-9][a-z0-9._-]{0,62}$")
 
 def _check_name(value: str, what: str) -> str:
     if not _LIBRARY_NAME.match(value):
-        raise ValueError(f"{what} '{value}' must be lowercase letters, digits, '.', '_' or '-' "
-                         "(max 63 characters)")
+        raise ValueError(
+            f"{what} '{value}' must be lowercase letters, digits, '.', '_' or '-' "
+            "(max 63 characters)"
+        )
     return value
 
 

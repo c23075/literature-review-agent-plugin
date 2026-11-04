@@ -41,7 +41,9 @@ def test_rules() -> None:
 
 
 def test_cli(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["--standalone", "cite", str(DATA / "refs.json"), "--style", "ieee", "--plain"]) == 0
+    assert (
+        main(["--standalone", "cite", str(DATA / "refs.json"), "--style", "ieee", "--plain"]) == 0
+    )
     out = capsys.readouterr().out
     assert out.startswith("[1] M. P. Walker and R. Stickgold") and "*" not in out
     assert main(["--standalone", "cite", str(DATA / "refs.json"), "--style", "x.csl"]) == 1

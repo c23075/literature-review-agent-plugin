@@ -107,7 +107,7 @@ def build_parser() -> argparse.ArgumentParser:
     cite.add_argument("--style", default="apa", help="apa (default), ieee, or a .csl file")
     cite.add_argument("--plain", action="store_true", help="no Markdown italics")
     cite.add_argument("--engine", choices=["auto", "builtin", "citeproc-js", "pandoc"],
-                      help="CSL engine (default: research.toml's citation_engine, auto)")  # fmt: skip
+                      help="CSL engine (default: citation_engine in research.toml)")  # fmt: skip
 
     lib = sub.add_parser("library", help="literature libraries: folders of PDFs, indexed")
     lib_sub = lib.add_subparsers(dest="library_command", metavar="ACTION", required=True)
@@ -261,9 +261,7 @@ def _in_sandbox(environment: str | None, argv: list[str]) -> int:
         _log("Cairnward isn't on PATH. Install it, or use --standalone (no protections)")
         return 2
     program = [str(_program())]
-    command = [exe, "plugin", "run", PLUGIN]
-    if environment:
-        command += ["--env", environment]
+    command = [exe, "plugin", "run", *(["--env", environment] if environment else []), PLUGIN]
     return subprocess.run([*command, "--", *program, *argv], check=False).returncode  # noqa: S603
 
 
@@ -384,8 +382,8 @@ def _drive(rt: Runtime, args: argparse.Namespace) -> int:
     if exe is None and not args.standalone:
         _log("Cairnward isn't on PATH")
         return 2
-    prefix = None if args.standalone else [exe or "", "plugin", "helper", PLUGIN, "--env",
-                                           lib.environment, "--"]  # fmt: skip
+    prefix = None if args.standalone else [exe or "", "plugin", "helper", "--env",
+                                           lib.environment, PLUGIN, "--"]  # fmt: skip
     run = drive.make_runner(None, prefix=prefix)
     try:
         for warning in drive.check_remote(args.remote, run):
@@ -454,7 +452,7 @@ def _install_plugin(rt: Runtime, args: argparse.Namespace) -> int:
         from cairnward_research.sources import SOURCES
 
         sources = ", ".join(json.dumps(s) for s in SOURCES)
-        settings.write_text(f'[sources]\nlitreview-online = [{sources}]\n', encoding="utf-8")
+        settings.write_text(f"[sources]\nlitreview-online = [{sources}]\n", encoding="utf-8")
     return code
 
 
@@ -948,4 +946,3 @@ def main_inner(argv: list[str], *, standalone: bool = False) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     return main_inner(list(sys.argv[1:] if argv is None else argv))
-

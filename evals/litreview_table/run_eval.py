@@ -76,7 +76,7 @@ QUESTION = "Is sleep duration related to working memory in adults?"
 
 
 def cw(*args: str, timeout: float | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run([sys.executable, "-m", "cairnward", *args], capture_output=True,
+    return subprocess.run([sys.executable, "-m", "cairnward_research", *args], capture_output=True,
                           text=True, check=False, timeout=timeout)  # fmt: skip
 
 
@@ -87,9 +87,9 @@ def build(folder: Path) -> None:
 
 
 def job_file(job_id: str) -> Path:
-    from cairnward.config import default_paths
+    from cairnward_research.runtime import default_data_dir
 
-    return default_paths().data_dir / "jobs" / job_id / "job.json"
+    return default_data_dir() / "jobs" / job_id / "job.json"
 
 
 def score(job: dict[str, Any], bib: str) -> list[dict[str, Any]]:

@@ -58,7 +58,7 @@ def build(folder: Path, spec: dict[str, Any]) -> None:
 
 
 def cw(*args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run([sys.executable, "-m", "cairnward", *args], capture_output=True,
+    return subprocess.run([sys.executable, "-m", "cairnward_research", *args], capture_output=True,
                           text=True, check=False)  # fmt: skip
 
 

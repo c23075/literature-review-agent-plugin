@@ -54,7 +54,7 @@ def score(cases: dict[str, Any], report: dict[str, Any]) -> list[dict[str, Any]]
 
 
 def cw(*args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run([sys.executable, "-m", "cairnward", *args], capture_output=True,
+    return subprocess.run([sys.executable, "-m", "cairnward_research", *args], capture_output=True,
                           text=True, check=False)  # fmt: skip
 
 

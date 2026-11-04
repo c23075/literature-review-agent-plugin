@@ -179,7 +179,9 @@ async def test_crash_while_unlocking_keeps_the_lock_and_can_be_redone(env: Any) 
         lock_library(v, r, paths.data_dir, "thesis", SECRET)
         # the rows went back, but the crash came before the file and key were removed
         data = json.loads(
-            open_sealed(v.open_item(item_id("thesis"), SECRET), r.locked_path("thesis").read_bytes())
+            open_sealed(
+                v.open_item(item_id("thesis"), SECRET), r.locked_path("thesis").read_bytes()
+            )
         )
         r.import_rows(r.find("thesis"), data)
         unlock_library(v, r, paths.data_dir, "thesis", SECRET)  # replaces, doesn't duplicate
