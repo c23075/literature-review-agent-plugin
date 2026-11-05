@@ -7,7 +7,7 @@ What's specific to this plugin. The sandbox, the services and the rules a plugin
 | # | Category | Threat | Controls | Spec | Req |
 |---|---|---|---|---|---|
 | T-24 | Info disclosure | The research library is plain text in `research.db` unless locked; locking a conversation doesn't cover a library it used | Owner-only data folder; encrypted in backups; `cairnward-research library lock` seals its text, embeddings and metadata. Residual: the source PDFs stay in your folder, a library is plain while unlocked, and older backups hold it | §4.6 | FR-RES-1 |
-| T-25 | Elevation of privilege | A crafted PDF exploits a third-party engine, or PaperQA2's `pickle` cache is altered | Since ADR-0017, parsing and these workers run in the research plugin's sandbox, not the core. PaperQA2 and Docling have their own environment; PaperQA2 refuses settings that don't point at the gateway; Presidio runs inside the core's sandbox with no network; cache folder is owner-only and hidden from agent runs, though profiles may write the rest of `~/.cache` | §4.6 | FR-RES-13, FR-RED-2 |
+| T-25 | Elevation of privilege | A crafted PDF exploits a third-party engine, or PaperQA2's cached index is altered | Since ADR-0017, parsing and these workers run in the research plugin's sandbox, not the core. PaperQA2 and Docling have their own environment; PaperQA2 refuses settings that don't point at the gateway; Presidio runs inside the core's sandbox with no network; PaperQA2's index is JSON in the plugin's owner-only data folder, which agent runs and other MCP servers can't reach, so altering it can change answers but can't run code (it was a pickle until I27) | §4.6 | FR-RES-13, FR-RED-2 |
 
 | # | Category | Threat | Controls |
 |---|---|---|---|

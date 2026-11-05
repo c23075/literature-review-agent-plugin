@@ -6,7 +6,7 @@ access to Cairnward's gateway only. Standalone on purpose: no Cairnward imports.
 
 stdin:  {"gateway": "http://127.0.0.1:8484/v1", "models": {"main", "fast", "embed"},
          "papers": [{"path", "docname", "title"}], "question", "cache", "evidence_k",
-         "skip_summary", "cache_key"}
+         "skip_summary"}
 env:    CAIRNWARD_API_KEY (a run key)
 stdout: a line "RESULT {json}" (answer, contexts) or "ERROR {json}".
 
@@ -15,18 +15,16 @@ Cairnward's virtual models and every API base the gateway; online metadata looku
 (use_doc_details) and image enrichment (multimodal) must be off; no other URL may
 appear. A violation stops the worker (FR-RES-13); the sandbox would block it anyway.
 
-The index is cached with pickle, so loading it runs code. It's signed with an HMAC key that
-Cairnward keeps in its state folder and passes in on stdin: an index written by anything
-else is ignored and rebuilt, never loaded.
+The index (parsed chunks and their embeddings) is cached as JSON, which loading can't turn
+into code. PaperQA2's search index is left out and rebuilt from the stored embeddings on each
+question, without calling the embedding model again. An index from another PaperQA2 version,
+or one that doesn't load, is rebuilt.
 """
 
 from __future__ import annotations
 
-import hashlib
-import hmac
 import json
 import os
-import pickle
 import sys
 from pathlib import Path
 from typing import Any
@@ -131,40 +129,61 @@ def build_settings(spec: dict[str, Any], key: str) -> Any:
     )  # fmt: skip
 
 
-def _sig_path(path: Path) -> Path:
-    return path.with_name(path.name + ".sig")
+CACHE_FORMAT = 1
 
 
-def _sign(key: bytes, data: bytes) -> str:
-    return hmac.new(key, data, hashlib.sha256).hexdigest()
+def _note(text: str) -> None:
+    print(f"cairnward: {text}", file=sys.stderr)
 
 
-def load_cache(path: Path, key: bytes) -> Any:
-    """The cached index, or None when there's none or its signature doesn't match (it's
-    rebuilt). Checked before unpickling: pickle runs code."""
+def load_cache(path: Path, docs_cls: Any, doc_classes: dict[str, Any], version: str) -> Any:
+    """The cached index as a `docs_cls` (PaperQA2's Docs), or None when there's none or it
+    can't be used: written by another PaperQA2 version, or not valid. It's then rebuilt.
+
+    `doc_classes` maps the saved type names to classes (Doc, DocDetails). Each document is
+    rebuilt as the type it was saved as: left to pydantic, a plain Doc loads as DocDetails,
+    which renames it, and every paper would then be added and embedded again."""
     try:
-        data = path.read_bytes()
-        expected = _sig_path(path).read_text(encoding="ascii").strip()
-    except (OSError, UnicodeDecodeError):
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
         return None
-    if not hmac.compare_digest(_sign(key, data), expected):
-        print("cairnward: the PaperQA2 index isn't signed by Cairnward; rebuilding it",
-              file=sys.stderr)  # fmt: skip
+    except (OSError, ValueError):
+        _note("the PaperQA2 index isn't readable JSON; rebuilding it")
         return None
-    return pickle.loads(data)  # signed by Cairnward, checked above
+    if not isinstance(raw, dict) or raw.get("format") != CACHE_FORMAT:
+        _note("the PaperQA2 index has an unknown format; rebuilding it")
+        return None
+    if raw.get("paperqa") != version:
+        _note(f"the PaperQA2 index is from version {raw.get('paperqa')}; rebuilding it")
+        return None
+    try:
+        body, kinds = raw["docs"], raw["doc_types"]
+        saved = body.get("docs") or {}
+        typed = {k: doc_classes[kinds[k]].model_validate(v) for k, v in saved.items()}
+        docs = docs_cls.model_validate({**body, "docs": typed})
+        if {k: d.docname for k, d in docs.docs.items()} != {
+            k: v.get("docname") for k, v in saved.items()
+        }:
+            raise ValueError("a document changed its name on loading")
+    except (ValueError, KeyError, TypeError, AttributeError) as exc:
+        # pydantic's ValidationError is a ValueError
+        _note(f"the PaperQA2 index doesn't load ({str(exc)[:200]}); rebuilding it")
+        return None
+    return docs
 
 
-def save_cache(path: Path, key: bytes, obj: Any) -> None:
-    data = pickle.dumps(obj)
-    tmp, sig_tmp = path.with_suffix(".tmp"), path.with_suffix(".sig.tmp")
-    tmp.write_bytes(data)
-    sig_tmp.write_text(_sign(key, data), encoding="ascii")
+def save_cache(path: Path, docs: Any, version: str) -> None:
+    """Chunks and embeddings as JSON; the search index is rebuilt from them when loaded."""
+    body = json.loads(docs.model_dump_json(exclude={"texts_index"}))
+    kinds = {k: type(d).__name__ for k, d in zip(body["docs"], docs.docs.values(), strict=True)}
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps({"format": CACHE_FORMAT, "paperqa": version, "doc_types": kinds,
+                               "docs": body}), encoding="utf-8")  # fmt: skip
     tmp.replace(path)
-    sig_tmp.replace(_sig_path(path))
 
 
 async def run(spec: dict[str, Any]) -> dict[str, Any]:
-    from paperqa import Docs
+    from paperqa import Doc, DocDetails, Docs, __version__
 
     key = os.environ["CAIRNWARD_API_KEY"]
     settings = build_settings(spec, key)
@@ -172,8 +191,7 @@ async def run(spec: dict[str, Any]) -> dict[str, Any]:
     if problems:
         raise PermissionError("refusing to run: " + "; ".join(problems))
     cache = Path(spec["cache"])
-    cache_key = bytes.fromhex(spec["cache_key"])
-    docs = load_cache(cache, cache_key) or Docs()
+    docs = load_cache(cache, Docs, {"Doc": Doc, "DocDetails": DocDetails}, __version__) or Docs()
     known = {d.docname for d in docs.docs.values()}
     added = 0
     for paper in spec["papers"]:
@@ -182,7 +200,7 @@ async def run(spec: dict[str, Any]) -> dict[str, Any]:
                             docname=paper["docname"], settings=settings)  # fmt: skip
             added += 1
     if added:
-        save_cache(cache, cache_key, docs)
+        save_cache(cache, docs, __version__)
     session = await docs.aquery(spec["question"], settings=settings)
     contexts = []
     for c in session.contexts:
