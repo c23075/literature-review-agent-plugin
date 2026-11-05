@@ -120,7 +120,7 @@ async def test_grobid_metadata_and_paperqa_cache_dont_stay_readable(env: Any) ->
     (meta / "a.pdf.tei.xml").write_text(f"<tei>{MARKER}</tei>")
     cache = _paperqa_cache(paths.data_dir, "thesis")
     cache.mkdir(parents=True)
-    (cache / "index.pkl").write_text(MARKER)
+    (cache / "index.json").write_text(MARKER)
     with Research.open(paths) as r:
         lock_library(v, r, paths.data_dir, "thesis", SECRET)
         assert not meta.exists() and not cache.exists()

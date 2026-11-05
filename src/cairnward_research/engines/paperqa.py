@@ -20,7 +20,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import secrets
 import shutil
 import subprocess
 import sys
@@ -52,27 +51,26 @@ def engine_dir(paths: Paths) -> Path:
     return paths.data_dir / "engines" / "paperqa"
 
 
+INDEX = "index.json"  # PaperQA2's chunks and embeddings for one library
+
+
 def cache_dir(data_dir: Path) -> Path:
     """The engine's working data: its own index of your papers. Owner-only."""
     return data_dir / "engines" / "paperqa-index"
 
 
-def cache_key(paths: Paths) -> bytes:
-    """The key that signs the worker's pickled index (in the state folder, which the
-    sandbox hides; owner-only). Created on first use."""
-    path = paths.state_dir / "paperqa-cache.key"
-    try:
-        return bytes.fromhex(path.read_text(encoding="ascii").strip())
-    except (OSError, ValueError):
-        pass
-    path.parent.mkdir(parents=True, exist_ok=True)
-    key = secrets.token_bytes(32)
-    tmp = path.with_suffix(".tmp")
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w", encoding="ascii") as fh:
-        fh.write(key.hex())
-    tmp.replace(path)
-    return key
+# Left by versions that cached the index with pickle (and signed it): never read now.
+OLD_CACHE_FILES = ("index.pkl", "index.pkl.sig", "index.tmp", "index.sig.tmp")
+OLD_KEY = "paperqa-cache.key"
+
+
+def remove_old_cache(paths: Paths, work: Path) -> None:
+    """Delete a library's pickled index and, once no library has one, the key that signed it."""
+    for name in OLD_CACHE_FILES:
+        (work / name).unlink(missing_ok=True)
+    root = cache_dir(paths.data_dir)
+    if not any(root.glob("*/index.pkl")):
+        (paths.state_dir / OLD_KEY).unlink(missing_ok=True)
 
 
 def python(paths: Paths) -> Path | None:
@@ -200,10 +198,10 @@ def prepare(cfg: Runtime, library: str, effort: str | None = None, *,
     if os.name != "nt":
         for d in (cache_dir(cfg.paths.data_dir), work):
             d.chmod(0o700)
+    remove_old_cache(cfg.paths, work)
     meta = work / "models.json"
     if meta.exists() and json.loads(meta.read_text()) != models:
-        for name in ("index.pkl", "index.pkl.sig"):  # embeddings from other models
-            (work / name).unlink(missing_ok=True)
+        (work / INDEX).unlink(missing_ok=True)  # embeddings from other models
     meta.write_text(json.dumps(models))
     return Prepared(library, env_name, papers, rows, models, work)
 
@@ -220,8 +218,8 @@ def execute(cfg: Runtime, prep: Prepared, question: str, *, evidence_k: int = 10
     work = prep.work
     spec = {"gateway": cfg.gateway, "models": prep.models,
             "papers": list(prep.papers.values()), "question": question,
-            "cache": str(work / "index.pkl"), "cache_key": cache_key(cfg.paths).hex(),
-            "evidence_k": evidence_k, "skip_summary": skip_summary}  # fmt: skip
+            "cache": str(work / INDEX), "evidence_k": evidence_k,
+            "skip_summary": skip_summary}  # fmt: skip
     env = {k: os.environ[k] for k in ("PATH", "LANG", "LC_ALL", "TZ", "HTTP_PROXY", "HTTPS_PROXY",
                                       "http_proxy", "https_proxy", "ALL_PROXY", "all_proxy",
                                       "NODE_EXTRA_CA_CERTS") if k in os.environ}  # fmt: skip

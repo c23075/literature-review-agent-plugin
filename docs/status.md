@@ -25,6 +25,7 @@ Numbers are kept from Cairnward's list, where these began.
 | I23 | A paper's planted instruction can still reach an answer. On the real model, one got its code into 2 of 4 lean runs, one of them with the new rule in place. The bad citation it asked for was flagged; an instruction without one wouldn't be | Open: limited, not preventable. An answer has no tools, and plugin output is gated |
 | I24 | The research repository's first Windows run found a Linux-only lock, a test checking POSIX file modes, and line endings breaking the citation files' hash check | Fixed in its PR 1 |
 | I26 | A paper can end a workflow step with no notes when reasoning uses its token limit. It's now reported and later steps are told, but nothing retries it | Open |
+| I27 | PaperQA2's index was a pickle, so changing the file could run code in the worker. Its signature protected little once the key sat in the same folder as the index | Fixed: stored as JSON. Tested with the real paper-qa and a scripted model, not yet a real model. Existing indexes are rebuilt once |
 
 ## Testing still to do
 - [ ] Real papers: accuracy, and how many relevant papers screening loses
