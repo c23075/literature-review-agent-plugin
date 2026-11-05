@@ -9,22 +9,14 @@ numbers (I20, I23) and action numbers are from Cairnward's `docs/status.md`.
   repository is `literature-review-agent-plugin`; the package and command are `cairnward-research`.
   The local clone is `../cairnward-research`, and it needs a Cairnward with the plugin contract
   (`main` after its PR 22).
-- `main` passes CI on Linux (run 41932316967). It has no Windows job until PR 1 merges.
-- **PR 1 (`windows-ci`) is open, with Auto-fix on in the session that opened it.** It adds the
-  Windows job. That job has found three things so far, all fixed on the branch:
-  - `fcntl` imported on Windows: now `msvcrt` there, and a test covers the lock;
-  - a test checking POSIX file modes: skipped on Windows;
-  - `.gitattributes` still naming Cairnward's old path, so the citation files failed their hash
-    check (the last run: 6 failed, 154 passed, all six from this).
-- The last push, 90a3797, hasn't reported yet. Check it before merging. The `msvcrt` lock has only
-  run if that job passes, and only then.
+- `main` passes CI on Linux and Windows (run 41935583415). The first Windows runs found a Linux-only
+  lock, a test checking POSIX file modes, and `.gitattributes` naming Cairnward's old path. All are
+  fixed. This shows the suite runs on Windows, not that the `msvcrt` lock has met a real second
+  process: the test takes it twice from one process.
 - The owner's real data hasn't moved here. `cairnward-research import` has only run in tests.
 
 ## Next
-1. Get PR 1 green and merged.
-2. Add `SECURITY.md`. The repository is public and has no stated way to report a vulnerability. The
-   core has one to follow.
-3. With the owner: real papers (about 20: 14 to keep, 6 to reject), then import their data with a
+1. With the owner: real papers (about 20: 14 to keep, 6 to reject), then import their data with a
    backup taken first.
 
 ## Tested on 2026-11-05
