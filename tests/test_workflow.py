@@ -182,7 +182,30 @@ async def test_one_failed_paper_doesnt_sink_the_rest(lib: Paths) -> None:
     items = {i["title"]: i for i in done.steps[0].output["items"]}
     assert "model server went away" in items["Paper B"]["error"] and items["Paper A"]["text"]
     assert "Failed" in r.store.result_path(done.id).read_text()
-    assert "model server" not in str(chat.prompts[-1][-1]["content"])  # errors aren't fed onward
+    compare = str(chat.prompts[-1][-1]["content"])
+    assert "model server" not in compare  # errors aren't fed onward
+    assert "### Paper B\n(No notes" in compare  # but the next step knows the paper is missing
+
+
+async def test_a_paper_cut_off_before_any_text_is_reported_and_passed_on(lib: Paths) -> None:
+    """Seen on a real model: reasoning used the whole limit, and the comparison saw one paper."""
+
+    class CutOff(Scripted):
+        async def ask(self, messages: list[dict[str, Any]], *, max_tokens: int = 0) -> Reply:
+            reply = await super().ask(messages, max_tokens=max_tokens)
+            if "Paper B" in messages[-1]["content"] and "Compare" not in messages[-1]["content"]:
+                return Reply("", "m", 10, 5, 60.0, finish_reason="length")
+            return reply
+
+    chat = CutOff()
+    audit = Recorder()
+    r = runner_for(lib, chat, audit)
+    done = await r.run(submit(r, BASIC))
+    assert done.status == "done"
+    assert "### Paper B\n(No notes" in str(chat.prompts[-1][-1]["content"])
+    assert "before writing anything" in r.store.result_path(done.id).read_text()
+    step = next(x for x in audit.records() if x.action == "workflow.step")
+    assert step.details["failed"] == 1 and step.details["items"] == 4
 
 
 async def test_resuming_doesnt_repeat_finished_papers(lib: Paths) -> None:

@@ -44,8 +44,9 @@ changes the plugin's digest. After updating, run `cairnward plugin pin research`
   gates plugin output.
 - **I20, PaperQA2:** wrong working summaries still reach answers (q3's 1990 date). One q3 run took
   1,401 s against about 300 s, which wasn't investigated.
-- **Never run for real:** the academic APIs, Zotero, Docling, GROBID, Drive through rclone, workflows
-  on a real model.
+- **Never run for real:** the academic APIs, Zotero, Docling, GROBID, Drive through rclone. Workflows
+  have run on a real model only with synthetic papers, and a paper can still end with no notes
+  when reasoning uses its token limit (`docs/bench/results-2026-11-05-plugin.md`).
 - **Accuracy on real papers is unknown.** Every result uses short synthetic ones.
 - Native Windows has no sandbox, so Windows CI shows the code runs there, not that the plugin's
   protections apply. Cairnward's route for Windows is WSL2, which has never run for real.
