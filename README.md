@@ -10,7 +10,14 @@ Literature libraries and reviews, as a plugin for [Cairnward](https://github.com
 it says little about real papers. See [what's known to go wrong](#known-problems).
 
 ## Install
-You need Cairnward running. Then:
+You need Cairnward running, with its command on your `PATH`. Its quick start uses `uv run`, which
+doesn't put it there, so from your Cairnward folder:
+
+```bash
+uv tool install .
+```
+
+Then, from this repository's folder:
 
 ```bash
 uv tool install .
