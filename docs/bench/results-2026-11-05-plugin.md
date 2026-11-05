@@ -46,6 +46,20 @@ All 16 answers passed, but some still say things the check can't see:
 
 One PaperQA2 q3 run took 1,401 s, against about 300 s for the others. It wasn't investigated.
 
+## A workflow on the real model
+
+`examples/workflows/compare-methods.yaml` on two short synthetic papers, offline environment, isolated
+server. It finished in about 10 minutes: 3 model calls, 4,303 tokens.
+
+**It found a bug, now fixed.** On one paper the model used the whole token limit on reasoning and wrote
+nothing. The job still showed both steps as ok, and that paper's notes were dropped without a word, so
+the comparison step said there was only one paper. Later steps now see a line saying the paper has no
+notes, the result marks it failed, and the audit's `failed` count includes it. The fix is tested with a
+stand-in model and hasn't been rerun on the real one. The paper still has no notes: nothing retries it,
+and the example's 400-token answer limit wasn't changed.
+
+Locking the library through the live server also worked: lock, search refused while locked, unlock.
+
 ## What this doesn't show
 Six short planted papers and one model can show that an attack works, not that the others are safe.
 Nothing here used real papers.

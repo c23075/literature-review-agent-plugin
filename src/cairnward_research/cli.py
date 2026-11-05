@@ -258,7 +258,10 @@ def _program() -> Path:
 def _in_sandbox(environment: str | None, argv: list[str]) -> int:
     exe = shutil.which("cairnward")
     if exe is None:
-        _log("Cairnward isn't on PATH. Install it, or use --standalone (no protections)")
+        _log(
+            "Cairnward isn't on PATH: run `uv tool install .` in its folder, or use --standalone "
+            "(no protections)"
+        )
         return 2
     program = [str(_program())]
     command = [exe, "plugin", "run", *(["--env", environment] if environment else []), PLUGIN]
@@ -380,7 +383,7 @@ def _drive(rt: Runtime, args: argparse.Namespace) -> int:
         lib = research.get(args.name)
     exe = shutil.which("cairnward")
     if exe is None and not args.standalone:
-        _log("Cairnward isn't on PATH")
+        _log("Cairnward isn't on PATH: run `uv tool install .` in its folder")
         return 2
     prefix = None if args.standalone else [exe or "", "plugin", "helper", "--env",
                                            lib.environment, PLUGIN, "--"]  # fmt: skip
@@ -418,7 +421,7 @@ def _install_plugin(rt: Runtime, args: argparse.Namespace) -> int:
 
     exe = shutil.which("cairnward")
     if exe is None:
-        _log("Cairnward isn't on PATH")
+        _log("Cairnward isn't on PATH: run `uv tool install .` in its folder")
         return 2
     code_dir = Path(cairnward_research.__file__).resolve().parents[1]
     program = _program()

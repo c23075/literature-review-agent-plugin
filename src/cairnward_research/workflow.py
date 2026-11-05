@@ -147,6 +147,9 @@ def _check_budget(job: Any, spec: Workflow) -> None:
         raise BudgetExceededError(f"workflow budget: {b.max_minutes:g} minutes of model time used")
 
 
+_NO_NOTES = "(No notes: this step failed on this paper. Don't draw conclusions about its content.)"
+
+
 def _step_text(job: Any, step_id: str) -> str:
     """A finished step's output, as a later step sees it."""
     for s in job.steps:
@@ -154,8 +157,9 @@ def _step_text(job: Any, step_id: str) -> str:
             if s.status != "done":
                 raise WorkflowError(f"needs step '{step_id}', which didn't finish")
             if "items" in s.output:
-                return "\n\n".join(f"### {i['title']}\n{i['text']}" for i in s.output["items"]
-                                   if i.get("text"))  # fmt: skip
+                # Say which papers have no notes, or the next step reads the rest as all there is.
+                return "\n\n".join(f"### {i['title']}\n{i.get('text') or _NO_NOTES}"
+                                   for i in s.output["items"])  # fmt: skip
             return str(s.output["text"])
     raise WorkflowError(f"no step '{step_id}'")
 
@@ -258,7 +262,7 @@ async def run_step(runner: Any, job: Any, step: Any) -> dict[str, Any]:
             runner.store.save(job)
 
     await asyncio.gather(*(paper(i, d) for i, d in enumerate(items)))
-    failed = sum("error" in v for v in done.values())
+    failed = sum(not v.get("text") for v in done.values())
     if stopped:
         _audit(runner, job, current.id, spec, items=len(done), failed=failed, why=str(stopped[0]))
         raise stopped[0]
@@ -304,6 +308,9 @@ def render(job: Any) -> list[str]:
         for item in output["items"]:
             lines += [f"### {item['title']}", ""]
             lines += [f"**Failed:** {item['error']}" if "error" in item
+                      else "**Failed:** the model reached its token limit before writing anything, "
+                           "so there's nothing for this paper. Running it again may work."
+                      if not item["text"].strip() and item.get("cut_off")
                       else _note(item) + item["text"], ""]  # fmt: skip
     return lines
 
