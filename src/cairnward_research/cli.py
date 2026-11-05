@@ -416,6 +416,46 @@ MANIFEST_HOSTS = ["api.openalex.org", "api.semanticscholar.org", "export.arxiv.o
                   "www.ncbi.nlm.nih.gov", "europepmc.org"]  # fmt: skip
 
 
+# Cairnward doesn't ship these: the plugin brings the environments it runs in. Yours are kept.
+ENVIRONMENTS = {
+    "litreview-offline": """\
+description = "Literature review with no network"
+effort_default = "high"
+
+[privacy]
+network = "off"
+hosted_backends = "deny"
+""",
+    "litreview-online": """\
+description = "Literature review with academic APIs (approval per new host)"
+effort_default = "high"
+
+[privacy]
+network = "ask"
+network_allow_hosts = [
+    "export.arxiv.org",
+    "api.semanticscholar.org",
+    "api.openalex.org",
+    "eutils.ncbi.nlm.nih.gov",
+    "api.crossref.org",
+]
+""",
+}
+
+
+def _write_environments(config_dir: Path) -> list[str]:
+    """Add the plugin's environments to Cairnward's configuration, returning those written."""
+    folder = config_dir / "environments"
+    folder.mkdir(parents=True, exist_ok=True)
+    written = []
+    for name, text in ENVIRONMENTS.items():
+        path = folder / f"{name}.toml"
+        if not path.exists():
+            path.write_text(text, encoding="utf-8")
+            written.append(name)
+    return written
+
+
 def _install_plugin(rt: Runtime, args: argparse.Namespace) -> int:
     import cairnward_research
 
@@ -423,6 +463,12 @@ def _install_plugin(rt: Runtime, args: argparse.Namespace) -> int:
     if exe is None:
         _log("Cairnward isn't on PATH: run `uv tool install .` in its folder")
         return 2
+    paths = subprocess.run([exe, "config", "paths"], capture_output=True,  # noqa: S603
+                           text=True, check=True).stdout  # fmt: skip
+    config_dir = next(Path(line.split(None, 1)[1]) for line in paths.splitlines()
+                      if line.startswith("config"))  # fmt: skip
+    for name in _write_environments(config_dir):
+        print(f"added environment {name} to {config_dir / 'environments'}")
     code_dir = Path(cairnward_research.__file__).resolve().parents[1]
     program = _program()
     lines = [

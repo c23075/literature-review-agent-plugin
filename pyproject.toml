@@ -57,6 +57,7 @@ select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF", "PTH"]
 "src/cairnward_research/check.py" = ["RUF001"]
 "src/cairnward_research/cite.py" = ["RUF001"]
 "evals/**" = ["S101", "S603", "S607"]
+"spikes/**" = ["PTH123", "S311"]  # kept as they ran
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

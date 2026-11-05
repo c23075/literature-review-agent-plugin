@@ -39,6 +39,8 @@ sandbox. For real evals, install from wheels on a separate test server, since ed
 changes the plugin's digest. After updating, run `cairnward plugin pin research`.
 
 ## Open issues
+Owner's view: [status.md](status.md). Threats: [threat-model.md](threat-model.md).
+
 - **I23, injection:** the `system` case still gets a planted code into some lean answers. Only an
   instruction that also asks for a bad citation gets flagged. Answers have no tools, and Cairnward
   gates plugin output.

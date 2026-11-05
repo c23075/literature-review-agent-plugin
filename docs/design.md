@@ -3,7 +3,15 @@
 Moved from Cairnward's spec with ADR-0017. It describes the research workflows as they
 were built in the core. What changed: models go through the gateway, outside requests through the
 fetch service, library keys through the key service, jobs run in this plugin, and commands are
-`cairnward-research`, not `cairnward`. Decision numbers (D63, D67, D68) refer to Cairnward's spec.
+`cairnward-research`, not `cairnward`. Decision numbers are kept from Cairnward's spec.
+
+## Decisions
+| # | Decision | Choice | ADR |
+|---|---|---|---|
+| D63 | Tiered research pipeline | Main model screens titles/abstracts (changed 2026-11-03: on the reference machine the fast model excluded every relevant paper, see `docs/bench/results-2026-11-03-screening.md`) and reads only included papers; full-text reading is an overnight job (~5–8 papers/hour) | — |
+| D67 | Reference formatting (revised 2026-11-02) | **Selectable CSL engine**, `[research] citation_engine = auto | builtin | citeproc-js | pandoc`; auto = citeproc-js (Zotero's engine, Node, installed pinned) if installed, else pandoc, else the built-in APA/IEEE formatter (always available, the fallback). Official APA 7 and IEEE CSL files and the en-US locale vendored unmodified (CC BY-SA 3.0), hash-checked. citeproc-py was tested and rejected: wrong sorting of accented names, capitalisation, conference papers and punctuation in quotes | — |
+| D68 | Richer PDF parsing | Optional sandboxed workers with **split roles**: **Docling** for body text, tables and OCR; **GROBID** for title/authors/DOI and the reference list; pypdfium2 stays the default and fallback; switched on per library | — (extends D53) |
+| D7, D25 | Literature sources, citations | Local PDFs, Zotero, arXiv/Semantic Scholar/OpenAlex/PubMed/Crossref; CSL styles (APA, IEEE default) | — |
 
 ### 4.6 Research workflows (D7, D25, G5)
 - **Jobs**, not chat turns: `cairnward-research research review --question "..." --library thesis --style apa` queues a job; the dashboard shows progress; jobs are **resumable** after a restart and can be scheduled ("run overnight"). On CPU, a review of tens of papers is expected to take hours; that's the design point.

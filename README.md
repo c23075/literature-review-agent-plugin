@@ -43,6 +43,8 @@ If you used `cairnward library` before research moved here, bring your libraries
 cairnward-research import
 ```
 
+`install-plugin` adds the `litreview-offline` and `litreview-online` environments to Cairnward's `environments/` folder, keeping any you already have. Run it again if you installed before Cairnward stopped shipping them.
+
 ## Use it
 ```bash
 cairnward-research library create thesis ~/papers --env litreview-offline

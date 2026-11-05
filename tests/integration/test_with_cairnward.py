@@ -119,6 +119,7 @@ def stack(tmp_path: Path) -> Iterator[Stack]:
 
 def test_library_ask_and_tools_under_the_contract(stack: Stack, tmp_path: Path) -> None:
     add = stack.research("install-plugin", "--yes")
+    assert (stack.tmp / "cfg" / "environments" / "litreview-offline.toml").exists()
     assert add.returncode == 0, add.stdout + add.stderr
     stack.start()
     verified = stack.cw("plugin", "verify", "research", "--env", "litreview-offline")
